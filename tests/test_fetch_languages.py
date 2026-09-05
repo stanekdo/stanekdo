@@ -90,8 +90,10 @@ class FetchLanguagesTests(unittest.TestCase):
                 aggregate_languages("example-user", lambda *_: data)
 
     def test_missing_secret_has_a_clear_error(self):
-        with patch.dict("os.environ", {}, clear=True), self.assertRaisesRegex(FetchError, "PROFILE_STATS_TOKEN"):
-            github_request("query", {})
+        for token_name in ("PROFILE_STATS_TOKEN", "PROFILE_CONTRIBUTIONS_TOKEN"):
+            with self.subTest(token_name=token_name), patch.dict("os.environ", {}, clear=True):
+                with self.assertRaisesRegex(FetchError, token_name):
+                    github_request("query", {}, token_name=token_name)
 
     def test_graphql_partial_response_is_rejected_without_logging_private_details(self):
         class Result:

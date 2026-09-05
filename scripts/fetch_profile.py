@@ -33,9 +33,11 @@ query($login: String!, $after: String) {
 """
 HISTORY_QUERY = """
 query($login: String!, $from: DateTime!, $to: DateTime!) {
+  viewer { login }
   user(login: $login) {
     contributionsCollection(from: $from, to: $to) {
       totalCommitContributions
+      restrictedContributionsCount
       contributionCalendar {
         weeks { contributionDays { date contributionCount } }
       }
@@ -47,6 +49,7 @@ RECENT_QUERY = """
 query($login: String!, $from: DateTime!, $to: DateTime!) {
   user(login: $login) {
     contributionsCollection(from: $from, to: $to) {
+      restrictedContributionsCount
       totalPullRequestReviewContributions
       totalRepositoriesWithContributedCommits
       totalRepositoriesWithContributedIssues
@@ -115,6 +118,8 @@ def recent_activity(username: str, today: date, request: Callable[[str, dict], d
         start = today.replace(year=today.year - 1, day=28)
     variables = {"login": username, "from": timestamp(start), "to": timestamp(today, end=True)}
     collection = request(RECENT_QUERY, variables)["user"]["contributionsCollection"]
+    if count(collection["restrictedContributionsCount"]):
+        raise FetchError("Private contribution data is restricted. Check contribution token access.")
     identifiers = set()
     for prefix, suffix in (("commit", "Commits"), ("issue", "Issues"), ("pullRequest", "PullRequests")):
         groups = collection[prefix + "ContributionsByRepository"]
@@ -174,7 +179,12 @@ def aggregate_profile(username: str, request: Callable[[str, dict], dict], today
         days = {}
         for year in range(created.year, today.year + 1):
             start, end = max(created, date(year, 1, 1)), min(today, date(year, 12, 31))
-            collection = request(HISTORY_QUERY, {"login": username, "from": timestamp(start), "to": timestamp(end, end=True)})["user"]["contributionsCollection"]
+            history = request(HISTORY_QUERY, {"login": username, "from": timestamp(start), "to": timestamp(end, end=True)})
+            if history["viewer"]["login"].casefold() != username.casefold():
+                raise FetchError("The contribution token must belong to the profile owner.")
+            collection = history["user"]["contributionsCollection"]
+            if count(collection["restrictedContributionsCount"]):
+                raise FetchError("Private contribution data is restricted. Check contribution token access.")
             stats["commits"] += count(collection["totalCommitContributions"])
             year_days = {}
             for week in collection["contributionCalendar"]["weeks"]:
@@ -214,7 +224,9 @@ def main() -> int:
     args = parser.parse_args()
     try:
         refresh(args.username, args.output,
-                lambda query, variables: github_request(query, variables, use_gh=args.use_gh),
+                lambda query, variables: github_request(query, variables, use_gh=args.use_gh,
+                    token_name="PROFILE_CONTRIBUTIONS_TOKEN" if query in (HISTORY_QUERY, RECENT_QUERY, CREATED_QUERY)
+                    else "PROFILE_STATS_TOKEN"),
                 datetime.now(timezone.utc).date())
     except FetchError as error:
         print(str(error), file=sys.stderr)

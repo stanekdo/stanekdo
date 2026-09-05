@@ -5,7 +5,9 @@
 1. Create a fine-grained GitHub token for the profile owner with access to all owned repositories.
 2. Grant read-only Contents, Issues, Pull requests, and Metadata permissions.
 3. Store it in the repository Actions secret `PROFILE_STATS_TOKEN`.
-4. Run the `Update profile cards` workflow.
+4. Create a classic token for the same owner with only the `read:user` scope.
+5. Store it in the repository Actions secret `PROFILE_CONTRIBUTIONS_TOKEN`.
+6. Run the `Update profile cards` workflow.
 
 The workflow runs every Monday at 04:00 UTC. Failed or incomplete fetches keep the previous snapshot.
 

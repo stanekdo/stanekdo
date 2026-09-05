@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from scripts import fetch_profile as fetch
 from scripts.fetch_languages import FetchError, REPOSITORIES_QUERY as LANGUAGES_QUERY
@@ -32,12 +33,14 @@ def fixture(query, variables):
         start, end = date.fromisoformat(variables["from"][:10]), date.fromisoformat(variables["to"][:10])
         days = [{"date": (start + timedelta(days=i)).isoformat(), "contributionCount": i + 1}
                 for i in range((end - start).days + 1)]
-        return {"user": {"contributionsCollection": {
+        return {"viewer": {"login": "example-user"}, "user": {"contributionsCollection": {
             "totalCommitContributions": 3 if start.year == 2025 else 4,
+            "restrictedContributionsCount": 0,
             "contributionCalendar": {"weeks": [{"contributionDays": days}]}}}}
     if query == fetch.RECENT_QUERY:
         groups = lambda *ids: [{"repository": {"id": identifier}} for identifier in ids]
         return {"user": {"contributionsCollection": {
+            "restrictedContributionsCount": 0,
             "totalPullRequestReviewContributions": 2,
             "totalRepositoriesWithContributedCommits": 2,
             "totalRepositoriesWithContributedIssues": 1,
@@ -90,6 +93,36 @@ class FetchProfileTests(unittest.TestCase):
             self.assertEqual(output.read_text(), "previous snapshot")
             self.assertFalse(output.with_suffix(".json.tmp").exists())
 
+    def test_restricted_contributions_keep_previous_snapshot(self):
+        for restricted_query in (fetch.HISTORY_QUERY, fetch.RECENT_QUERY):
+            def request(query, variables):
+                result = fixture(query, variables)
+                if query == restricted_query:
+                    result["user"]["contributionsCollection"]["restrictedContributionsCount"] = 12
+                return result
+            with self.subTest(query=restricted_query), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / "profile.json"
+                output.write_text("previous snapshot")
+                with self.assertRaisesRegex(FetchError, "restricted"):
+                    fetch.refresh("example-user", output, request, self.today)
+                self.assertEqual(output.read_text(), "previous snapshot")
+
+    def test_cli_routes_contribution_queries_to_read_user_token(self):
+        for use_gh in (False, True):
+            with self.subTest(use_gh=use_gh), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / "profile.json"
+                args = ["fetch_profile", "--username", "example-user", "--output", str(output)]
+                if use_gh:
+                    args.append("--use-gh")
+                def request(query, variables, **options):
+                    contribution_query = query in (fetch.HISTORY_QUERY, fetch.RECENT_QUERY, fetch.CREATED_QUERY)
+                    expected = "PROFILE_CONTRIBUTIONS_TOKEN" if contribution_query else "PROFILE_STATS_TOKEN"
+                    self.assertEqual(options, {"use_gh": use_gh, "token_name": expected})
+                    return fixture(query, variables)
+                with patch("sys.argv", args), patch.object(fetch, "github_request", side_effect=request), patch("builtins.print"):
+                    self.assertEqual(fetch.main(), 0)
+                self.assertEqual(json.loads(output.read_text())["stats"]["commits"], 7)
+
     def test_incomplete_duplicate_or_invalid_counts_are_rejected(self):
         def changed(query_to_change, change):
             def request(query, variables):
@@ -100,6 +133,7 @@ class FetchProfileTests(unittest.TestCase):
             return request
         cases = [
             changed(fetch.ACCOUNT_QUERY, lambda r: r["viewer"].update(login="another-user")),
+            changed(fetch.HISTORY_QUERY, lambda r: r["viewer"].update(login="another-user")),
             changed(fetch.ACCOUNT_QUERY, lambda r: r["user"]["issues"].update(totalCount=True)),
             changed(fetch.REPOSITORIES_QUERY, lambda r: r["user"]["repositories"]["nodes"][0].update(isPrivate=False)),
             changed(fetch.REPOSITORIES_QUERY, lambda r: r["user"]["repositories"]["nodes"][0].update(id="duplicate")),

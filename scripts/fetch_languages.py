@@ -48,7 +48,8 @@ class FetchError(Exception):
     """A safe error message, without API response bodies or credentials."""
 
 
-def github_request(query: str, variables: dict, *, use_gh: bool = False) -> dict:
+def github_request(query: str, variables: dict, *, use_gh: bool = False,
+                   token_name: str = "PROFILE_STATS_TOKEN") -> dict:
     payload = json.dumps({"query": query, "variables": variables}).encode()
     try:
         if use_gh:
@@ -60,9 +61,9 @@ def github_request(query: str, variables: dict, *, use_gh: bool = False) -> dict
                 raise FetchError("GitHub CLI request failed. Check login, token access, and rate limits.")
             response = json.loads(result.stdout)
         else:
-            token = os.environ.get("PROFILE_STATS_TOKEN", "").strip()
+            token = os.environ.get(token_name, "").strip()
             if not token:
-                raise FetchError("Set the PROFILE_STATS_TOKEN Actions secret with access to your private repositories.")
+                raise FetchError(f"Set the {token_name} Actions secret with the required read access.")
             request = Request(
                 "https://api.github.com/graphql", data=payload,
                 headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json", "User-Agent": "stanekdo-profile-cards"},

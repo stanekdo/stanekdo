@@ -26,6 +26,7 @@ jobs:
       - name: Refresh public and private profile statistics
         env:
           PROFILE_STATS_TOKEN: ${{ secrets.PROFILE_STATS_TOKEN }}
+          PROFILE_CONTRIBUTIONS_TOKEN: ${{ secrets.PROFILE_CONTRIBUTIONS_TOKEN }}
         run: python3 -m scripts.fetch_profile --username "$GITHUB_REPOSITORY_OWNER"
 
       - name: Render Copper profile
