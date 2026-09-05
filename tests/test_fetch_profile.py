@@ -22,7 +22,8 @@ def fixture(query, variables):
     if query == fetch.ACCOUNT_QUERY:
         return {"viewer": {"login": "example-user"}, "user": {
             "createdAt": "2025-12-30T12:00:00Z", "followers": {"totalCount": 8},
-            "pullRequests": {"totalCount": 19}, "issues": {"totalCount": 7}}}
+            "pullRequests": {"totalCount": 19}, "issues": {"totalCount": 7},
+            "repositoriesContributedTo": {"totalCount": 4}}}
     if query == fetch.REPOSITORIES_QUERY:
         if variables["after"] is None:
             repos = connection([repository("private-id", True, 3)], "next-page")
@@ -38,7 +39,7 @@ def fixture(query, variables):
             "restrictedContributionsCount": 0,
             "contributionCalendar": {"weeks": [{"contributionDays": days}]}}}}
     if query == fetch.RECENT_QUERY:
-        return {"user": {"repositoriesContributedTo": {"totalCount": 4}, "contributionsCollection": {
+        return {"user": {"contributionsCollection": {
             "restrictedContributionsCount": 0,
             "totalPullRequestReviewContributions": 2,
             "totalRepositoriesWithContributedCommits": 2,
@@ -144,7 +145,7 @@ class FetchProfileTests(unittest.TestCase):
         def request(query, variables):
             calls.append(variables)
             return fixture(query, variables)
-        fetch.recent_activity("example-user", date(2024, 2, 29), request)
+        fetch.recent_activity("example-user", date(2024, 2, 29), request, contributed=4)
         self.assertEqual(calls[0]["from"], "2023-02-28T00:00:00Z")
 
 

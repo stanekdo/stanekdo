@@ -18,6 +18,9 @@ query($login: String!) {
     followers { totalCount }
     pullRequests { totalCount }
     issues { totalCount }
+    repositoriesContributedTo(contributionTypes: [COMMIT, ISSUE, PULL_REQUEST, REPOSITORY], includeUserRepositories: true) {
+      totalCount
+    }
   }
 }
 """
@@ -48,9 +51,6 @@ query($login: String!, $from: DateTime!, $to: DateTime!) {
 RECENT_QUERY = """
 query($login: String!, $from: DateTime!, $to: DateTime!) {
   user(login: $login) {
-    repositoriesContributedTo(contributionTypes: [COMMIT, ISSUE, PULL_REQUEST, REPOSITORY], includeUserRepositories: true) {
-      totalCount
-    }
     contributionsCollection(from: $from, to: $to) {
       restrictedContributionsCount
       totalPullRequestReviewContributions
@@ -97,23 +97,21 @@ def weekly_streak(days: dict[date, int], today: date) -> dict:
     return {"total": sum(days.values()), "current": summary(current)}
 
 
-def recent_activity(username: str, today: date, request: Callable[[str, dict], dict]) -> dict:
+def recent_activity(username: str, today: date, request: Callable[[str, dict], dict], contributed: int) -> dict:
     try:
         start = today.replace(year=today.year - 1)
     except ValueError:  # February 29 has no counterpart in a non-leap year.
         start = today.replace(year=today.year - 1, day=28)
     variables = {"login": username, "from": timestamp(start), "to": timestamp(today, end=True)}
-    user = request(RECENT_QUERY, variables)["user"]
-    collection = user["contributionsCollection"]
+    collection = request(RECENT_QUERY, variables)["user"]["contributionsCollection"]
     if count(collection["restrictedContributionsCount"]):
         raise FetchError("Private contribution data is restricted. Check contribution token access.")
-    contributed = count(user["repositoriesContributedTo"]["totalCount"])
     category_counts = [count(collection["totalRepositoriesWithContributed" + suffix])
                        for suffix in ("Commits", "Issues", "PullRequests")]
     category_counts.append(count(collection["repositoryContributions"]["totalCount"]))
     if contributed < max(category_counts):
         raise FetchError("GitHub returned an incomplete contributed repository count. Check token access.")
-    return {"contributed_to": contributed, "reviews": count(collection["totalPullRequestReviewContributions"])}
+    return {"reviews": count(collection["totalPullRequestReviewContributions"])}
 
 
 def aggregate_profile(username: str, request: Callable[[str, dict], dict], today: date) -> dict:
@@ -126,7 +124,8 @@ def aggregate_profile(username: str, request: Callable[[str, dict], dict], today
         if not date(2007, 1, 1) <= created <= today:
             raise FetchError("GitHub returned an invalid account creation date.")
         stats = {name: count(user[field]["totalCount"]) for name, field in
-                 (("followers", "followers"), ("prs", "pullRequests"), ("issues", "issues"))}
+                 (("followers", "followers"), ("prs", "pullRequests"), ("issues", "issues"),
+                  ("contributed_to", "repositoriesContributedTo"))}
         stats.update(stars=0, repositories=0, commits=0)
         after = None
         seen_pages, seen_repositories = set(), set()
@@ -169,7 +168,7 @@ def aggregate_profile(username: str, request: Callable[[str, dict], dict], today
             if len(year_days) != (end - start).days + 1:
                 raise FetchError("GitHub returned an incomplete contribution calendar.")
             days.update(year_days)
-        stats.update(recent_activity(username, today, request))
+        stats.update(recent_activity(username, today, request, stats["contributed_to"]))
         languages = aggregate_languages(username, request)
     except (KeyError, TypeError, AttributeError, ValueError):
         raise FetchError("GitHub returned incomplete profile data. Cached totals were kept.") from None
