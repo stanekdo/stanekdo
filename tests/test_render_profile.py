@@ -99,7 +99,7 @@ class RenderProfileTests(unittest.TestCase):
         self.assertIn("(prefers-color-scheme: dark)", readme)
         self.assertNotIn("max-width:", readme)
         self.assertNotIn("profile-mobile-", readme)
-        self.assertIn('width="780"', readme)
+        self.assertIn('width="100%"', readme)
         for path in re.findall(r'(?:src|srcset)="\./([^\"]+)"', readme):
             self.assertTrue((ROOT / path).is_file(), path)
 
