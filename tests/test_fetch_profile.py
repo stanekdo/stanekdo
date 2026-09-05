@@ -38,21 +38,14 @@ def fixture(query, variables):
             "restrictedContributionsCount": 0,
             "contributionCalendar": {"weeks": [{"contributionDays": days}]}}}}
     if query == fetch.RECENT_QUERY:
-        groups = lambda *ids: [{"repository": {"id": identifier}} for identifier in ids]
-        return {"user": {"contributionsCollection": {
+        return {"user": {"repositoriesContributedTo": {"totalCount": 4}, "contributionsCollection": {
             "restrictedContributionsCount": 0,
             "totalPullRequestReviewContributions": 2,
             "totalRepositoriesWithContributedCommits": 2,
             "totalRepositoriesWithContributedIssues": 1,
             "totalRepositoriesWithContributedPullRequests": 1,
-            "commitContributionsByRepository": groups("private-id", "public-id"),
-            "issueContributionsByRepository": groups("private-id"),
-            "pullRequestContributionsByRepository": groups("third-id"),
-            "repositoryContributions": connection(groups("private-id"), "created-next", totalCount=2),
+            "repositoryContributions": {"totalCount": 2},
         }}}
-    if query == fetch.CREATED_QUERY:
-        return {"user": {"contributionsCollection": {"repositoryContributions":
-            connection([{"repository": {"id": "fourth-id"}}])}}}
     if query == LANGUAGES_QUERY:
         languages = {"edges": [{"size": 300, "node": {"name": "Python", "color": "#3572A5"}}],
                      "pageInfo": {"hasNextPage": False, "endCursor": None}}
@@ -77,7 +70,7 @@ class FetchProfileTests(unittest.TestCase):
         self.assertEqual([v["from"] for q, v in calls if q == fetch.HISTORY_QUERY],
                          ["2025-12-30T00:00:00Z", "2026-01-01T00:00:00Z"])
         saved = json.dumps(result)
-        for detail in ("private-id", "public-id", "third-id", "fourth-id", "contributionDays", "stargazerCount", "size"):
+        for detail in ("private-id", "public-id", "contributionDays", "stargazerCount", "size"):
             self.assertNotIn(detail, saved)
 
     def test_any_late_failure_keeps_previous_complete_snapshot(self):
@@ -115,7 +108,7 @@ class FetchProfileTests(unittest.TestCase):
                 if use_gh:
                     args.append("--use-gh")
                 def request(query, variables, **options):
-                    contribution_query = query in (fetch.HISTORY_QUERY, fetch.RECENT_QUERY, fetch.CREATED_QUERY)
+                    contribution_query = query in (fetch.HISTORY_QUERY, fetch.RECENT_QUERY)
                     expected = "PROFILE_CONTRIBUTIONS_TOKEN" if contribution_query else "PROFILE_STATS_TOKEN"
                     self.assertEqual(options, {"use_gh": use_gh, "token_name": expected})
                     return fixture(query, variables)

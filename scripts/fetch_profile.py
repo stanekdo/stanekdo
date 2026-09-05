@@ -48,31 +48,17 @@ query($login: String!, $from: DateTime!, $to: DateTime!) {
 RECENT_QUERY = """
 query($login: String!, $from: DateTime!, $to: DateTime!) {
   user(login: $login) {
+    repositoriesContributedTo(contributionTypes: [COMMIT, ISSUE, PULL_REQUEST, REPOSITORY], includeUserRepositories: true) {
+      totalCount
+    }
     contributionsCollection(from: $from, to: $to) {
       restrictedContributionsCount
       totalPullRequestReviewContributions
       totalRepositoriesWithContributedCommits
       totalRepositoriesWithContributedIssues
       totalRepositoriesWithContributedPullRequests
-      commitContributionsByRepository(maxRepositories: 100) { repository { id } }
-      issueContributionsByRepository(maxRepositories: 100, excludeFirst: false, excludePopular: false) { repository { id } }
-      pullRequestContributionsByRepository(maxRepositories: 100, excludeFirst: false, excludePopular: false) { repository { id } }
       repositoryContributions(first: 100, excludeFirst: false) {
         totalCount
-        nodes { repository { id } }
-        pageInfo { hasNextPage endCursor }
-      }
-    }
-  }
-}
-"""
-CREATED_QUERY = """
-query($login: String!, $from: DateTime!, $to: DateTime!, $after: String!) {
-  user(login: $login) {
-    contributionsCollection(from: $from, to: $to) {
-      repositoryContributions(first: 100, after: $after, excludeFirst: false) {
-        nodes { repository { id } }
-        pageInfo { hasNextPage endCursor }
       }
     }
   }
@@ -117,31 +103,17 @@ def recent_activity(username: str, today: date, request: Callable[[str, dict], d
     except ValueError:  # February 29 has no counterpart in a non-leap year.
         start = today.replace(year=today.year - 1, day=28)
     variables = {"login": username, "from": timestamp(start), "to": timestamp(today, end=True)}
-    collection = request(RECENT_QUERY, variables)["user"]["contributionsCollection"]
+    user = request(RECENT_QUERY, variables)["user"]
+    collection = user["contributionsCollection"]
     if count(collection["restrictedContributionsCount"]):
         raise FetchError("Private contribution data is restricted. Check contribution token access.")
-    identifiers = set()
-    for prefix, suffix in (("commit", "Commits"), ("issue", "Issues"), ("pullRequest", "PullRequests")):
-        groups = collection[prefix + "ContributionsByRepository"]
-        expected = count(collection["totalRepositoriesWithContributed" + suffix])
-        group_ids = {group["repository"]["id"] for group in groups}
-        if len(group_ids) != expected:
-            raise FetchError("GitHub did not return all contributed repositories. Cached totals were kept.")
-        identifiers.update(group_ids)
-    created = collection["repositoryContributions"]
-    expected_created = count(created["totalCount"])
-    created_ids = set()
-    seen = set()
-    while True:
-        created_ids.update(item["repository"]["id"] for item in created["nodes"])
-        after = next_cursor(created, seen)
-        if after is None:
-            break
-        created = request(CREATED_QUERY, {**variables, "after": after})["user"]["contributionsCollection"]["repositoryContributions"]
-    if len(created_ids) != expected_created:
-        raise FetchError("GitHub did not return all created repositories. Cached totals were kept.")
-    identifiers.update(created_ids)
-    return {"contributed_to": len(identifiers), "reviews": count(collection["totalPullRequestReviewContributions"])}
+    contributed = count(user["repositoriesContributedTo"]["totalCount"])
+    category_counts = [count(collection["totalRepositoriesWithContributed" + suffix])
+                       for suffix in ("Commits", "Issues", "PullRequests")]
+    category_counts.append(count(collection["repositoryContributions"]["totalCount"]))
+    if contributed < max(category_counts):
+        raise FetchError("GitHub returned an incomplete contributed repository count. Check token access.")
+    return {"contributed_to": contributed, "reviews": count(collection["totalPullRequestReviewContributions"])}
 
 
 def aggregate_profile(username: str, request: Callable[[str, dict], dict], today: date) -> dict:
@@ -225,7 +197,7 @@ def main() -> int:
     try:
         refresh(args.username, args.output,
                 lambda query, variables: github_request(query, variables, use_gh=args.use_gh,
-                    token_name="PROFILE_CONTRIBUTIONS_TOKEN" if query in (HISTORY_QUERY, RECENT_QUERY, CREATED_QUERY)
+                    token_name="PROFILE_CONTRIBUTIONS_TOKEN" if query in (HISTORY_QUERY, RECENT_QUERY)
                     else "PROFILE_STATS_TOKEN"),
                 datetime.now(timezone.utc).date())
     except FetchError as error:
