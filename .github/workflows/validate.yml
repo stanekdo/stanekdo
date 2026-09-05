@@ -7,12 +7,20 @@ on:
     paths:
       - ".github/dependabot.yml"
       - ".github/workflows/**"
+      - "scripts/**"
+      - "tests/**"
+      - "assets/**"
+      - "README.md"
   push:
     branches:
       - main
     paths:
       - ".github/dependabot.yml"
       - ".github/workflows/**"
+      - "scripts/**"
+      - "tests/**"
+      - "assets/**"
+      - "README.md"
   workflow_dispatch:
 
 permissions:
@@ -160,3 +168,11 @@ jobs:
               f"Validated {len(workflow_files)} workflow files and the Dependabot policy."
           )
           PY
+
+      - name: Test profile cards
+        run: python3 -m unittest discover -s tests
+
+      - name: Verify generated cards match source data
+        run: |
+          python3 -m scripts.render_profile
+          git diff --exit-code -- assets/profile-*.svg

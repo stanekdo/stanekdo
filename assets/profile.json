@@ -1,0 +1,66 @@
+{
+  "scope": "Public and private activity accessible to the profile owner's token",
+  "as_of": "2026-09-05",
+  "created": "2016-06-28",
+  "stats": {
+    "followers": 12,
+    "prs": 847,
+    "issues": 54,
+    "stars": 1,
+    "repositories": 70,
+    "commits": 4830,
+    "contributed_to": 66,
+    "reviews": 0
+  },
+  "streak": {
+    "total": 5805,
+    "current": {
+      "weeks": 53,
+      "start": "2025-08-31",
+      "end": "2026-09-05"
+    }
+  },
+  "language_count": 33,
+  "languages": [
+    {
+      "name": "Jupyter Notebook",
+      "percentage": 28.130912,
+      "color": "#DA5B0B"
+    },
+    {
+      "name": "JavaScript",
+      "percentage": 19.028433,
+      "color": "#f1e05a"
+    },
+    {
+      "name": "TypeScript",
+      "percentage": 15.032015,
+      "color": "#3178c6"
+    },
+    {
+      "name": "Go",
+      "percentage": 12.903451,
+      "color": "#00ADD8"
+    },
+    {
+      "name": "Python",
+      "percentage": 10.875558,
+      "color": "#3572A5"
+    },
+    {
+      "name": "TeX",
+      "percentage": 6.260653,
+      "color": "#3D6117"
+    },
+    {
+      "name": "Elixir",
+      "percentage": 4.188906,
+      "color": "#6e4a7e"
+    },
+    {
+      "name": "C#",
+      "percentage": 3.580072,
+      "color": "#7355dd"
+    }
+  ]
+}

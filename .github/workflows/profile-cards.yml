@@ -6,6 +6,8 @@ on:
     paths:
       - README.md
       - .github/workflows/profile-cards.yml
+      - scripts/**
+      - assets/trophy-art.json
   schedule:
     - cron: "0 4 * * 1"
   workflow_dispatch:
@@ -15,51 +17,19 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-slim
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Cache profile images as static assets
-        run: |
-          set -euo pipefail
+      - name: Refresh public and private profile statistics
+        env:
+          PROFILE_STATS_TOKEN: ${{ secrets.PROFILE_STATS_TOKEN }}
+        run: python3 -m scripts.fetch_profile --username "$GITHUB_REPOSITORY_OWNER"
 
-          fetch() {
-            local url="$1" dest="$2" label="$3"
-            local attempt=1 max_attempts=5 delay=5
-
-            while true; do
-              if curl -fsSL --retry 0 --connect-timeout 10 --max-time 40 "${url}" -o "${dest}.tmp"; then
-                if grep -q '<svg' "${dest}.tmp" \
-                  && ! grep -Eqi 'Something went wrong|Failed to retrieve|Could not resolve' "${dest}.tmp"; then
-                  sed -i 's/[[:space:]]*$//' "${dest}.tmp"
-                  mv "${dest}.tmp" "${dest}"
-                  echo "Saved ${label} -> ${dest}"
-                  break
-                fi
-
-                echo "${label} returned an invalid SVG."
-                rm -f "${dest}.tmp"
-              fi
-
-              if [ "${attempt}" -ge "${max_attempts}" ]; then
-                echo "::warning ::${label} failed after ${max_attempts} attempts; keeping existing ${dest} if present."
-                rm -f "${dest}.tmp"
-                break
-              fi
-
-              echo "${label} attempt ${attempt}/${max_attempts} failed; retrying in ${delay}s..."
-              attempt=$((attempt + 1))
-              sleep "${delay}"
-            done
-          }
-
-          mkdir -p assets
-
-          fetch "https://github-readme-streak-stats.herokuapp.com?user=${GITHUB_REPOSITORY_OWNER}&theme=oceanic-next&border_radius=5&mode=weekly&border=EBEBEB&currStreakNum=C9CACC&sideNums=C9CACC&currStreakLabel=FBFCFF&sideLabels=FBFCFF&background=1A2B34&ring=CFD359" assets/streak.svg "streak"
-          fetch "https://github-readme-stats-fast.vercel.app/api?username=${GITHUB_REPOSITORY_OWNER}&show_icons=true&include_all_commits=true&count_private=true&title_color=ffffff&text_color=c9cacc&icon_color=4AB097&bg_color=1A2B34" assets/stats.svg "stats"
-          fetch "https://github-readme-stats-fast.vercel.app/api/top-langs/?username=${GITHUB_REPOSITORY_OWNER}&layout=compact&card_width=320&langs_count=8&title_color=ffffff&text_color=c9cacc&icon_color=4AB097&bg_color=1A2B34" assets/top-langs.svg "top-langs"
-          fetch "https://trophy.ryglcloud.net/?username=${GITHUB_REPOSITORY_OWNER}&theme=onedark&row=1&margin-w=10" assets/github-profile-trophy.svg "trophy"
+      - name: Render Copper profile
+        run: python3 -m scripts.render_profile
 
       - name: Commit and push if changed
         run: |
