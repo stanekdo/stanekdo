@@ -29,7 +29,7 @@ jobs:
           PROFILE_CONTRIBUTIONS_TOKEN: ${{ secrets.PROFILE_CONTRIBUTIONS_TOKEN }}
         run: python3 -m scripts.fetch_profile --username "$GITHUB_REPOSITORY_OWNER"
 
-      - name: Render Copper profile
+      - name: Render profile
         run: python3 -m scripts.render_profile
 
       - name: Commit and push if changed

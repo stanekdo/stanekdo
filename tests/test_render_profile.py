@@ -15,15 +15,18 @@ class RenderProfileTests(unittest.TestCase):
     def setUpClass(cls):
         cls.profile = load_profile(ROOT / "assets")
 
-    def test_every_theme_and_size_preserves_stats_and_trophy_shapes(self):
+    def test_theme_files_preserve_stats_and_trophy_shapes(self):
         source_paths = []
         for trophy in self.profile.trophies:
             card = ET.fromstring(f'<svg xmlns="{NS[1:-1]}">{trophy.artwork}</svg>')
             source_paths.extend(e.attrib["d"] for e in card.iter(NS + "path"))
-        for theme in ("dark", "light"):
-            for mobile in (False, True):
-                with self.subTest(theme=theme, mobile=mobile):
-                    root = ET.fromstring(render(self.profile, theme, mobile))
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory)
+            render_files(ROOT / "assets", output)
+            self.assertEqual({path.name for path in output.iterdir()}, {"profile-dark.svg", "profile-light.svg"})
+            for theme in ("dark", "light"):
+                with self.subTest(theme=theme):
+                    root = ET.parse(output / f"profile-{theme}.svg").getroot()
                     visible = " ".join(texts(root))
                     for value in [self.profile.streak[i] for i in (0, 2, 4, 5)]:
                         self.assertIn(value, visible)
@@ -84,11 +87,10 @@ class RenderProfileTests(unittest.TestCase):
             self.assertEqual(output.read_text(), "previous card")
 
     def test_streak_has_one_count_without_floating_longest_statistic(self):
-        for mobile in (False, True):
-            root = ET.fromstring(f'<svg xmlns="{NS[1:-1]}">{streak_card(Svg("dark"), self.profile, mobile)}</svg>')
-            labels = texts(root)
-            self.assertEqual(labels.count(self.profile.streak[5]), 1)
-            self.assertNotIn("Longest week streak", labels)
+        root = ET.fromstring(f'<svg xmlns="{NS[1:-1]}">{streak_card(Svg("dark"), self.profile)}</svg>')
+        labels = texts(root)
+        self.assertEqual(labels.count(self.profile.streak[5]), 1)
+        self.assertNotIn("Longest week streak", labels)
 
     def test_readme_uses_theme_images_and_places_views_last(self):
         readme = (ROOT / "README.md").read_text()
