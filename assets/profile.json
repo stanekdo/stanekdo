@@ -6,14 +6,14 @@
     "followers": 12,
     "prs": 848,
     "issues": 54,
+    "contributed_to": 66,
     "stars": 1,
     "repositories": 70,
-    "commits": 4833,
-    "contributed_to": 66,
+    "commits": 4836,
     "reviews": 0
   },
   "streak": {
-    "total": 5809,
+    "total": 5812,
     "current": {
       "weeks": 53,
       "start": "2025-08-31",
@@ -24,42 +24,42 @@
   "languages": [
     {
       "name": "Jupyter Notebook",
-      "percentage": 28.114631,
+      "percentage": 28.114238,
       "color": "#DA5B0B"
     },
     {
       "name": "JavaScript",
-      "percentage": 19.01742,
+      "percentage": 19.017154,
       "color": "#f1e05a"
     },
     {
       "name": "TypeScript",
-      "percentage": 15.023315,
+      "percentage": 15.023104,
       "color": "#3178c6"
     },
     {
       "name": "Go",
-      "percentage": 12.895983,
+      "percentage": 12.895802,
       "color": "#00ADD8"
     },
     {
       "name": "Python",
-      "percentage": 10.927142,
+      "percentage": 10.928388,
       "color": "#3572A5"
     },
     {
       "name": "TeX",
-      "percentage": 6.25703,
+      "percentage": 6.256942,
       "color": "#3D6117"
     },
     {
       "name": "Elixir",
-      "percentage": 4.186481,
+      "percentage": 4.186423,
       "color": "#6e4a7e"
     },
     {
       "name": "C#",
-      "percentage": 3.577999,
+      "percentage": 3.577949,
       "color": "#7355dd"
     }
   ]
