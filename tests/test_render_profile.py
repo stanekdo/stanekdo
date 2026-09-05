@@ -95,7 +95,9 @@ class RenderProfileTests(unittest.TestCase):
         self.assertGreater(readme.index("komarev.com"), readme.index("</picture>"))
         self.assertIn('<p align="center">', readme)
         self.assertIn("(prefers-color-scheme: dark)", readme)
-        self.assertIn("(max-width: 600px)", readme)
+        self.assertNotIn("max-width:", readme)
+        self.assertNotIn("profile-mobile-", readme)
+        self.assertIn('width="780"', readme)
         for path in re.findall(r'(?:src|srcset)="\./([^\"]+)"', readme):
             self.assertTrue((ROOT / path).is_file(), path)
 

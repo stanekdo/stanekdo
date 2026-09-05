@@ -1,8 +1,6 @@
 <picture>
-  <source media="(max-width: 600px) and (prefers-color-scheme: dark)" srcset="./assets/profile-mobile-dark.svg" />
-  <source media="(max-width: 600px)" srcset="./assets/profile-mobile-light.svg" />
   <source media="(prefers-color-scheme: dark)" srcset="./assets/profile-dark.svg" />
-  <img src="./assets/profile-light.svg" width="100%" alt="Public and private GitHub statistics, current contribution streak, languages, and trophies" />
+  <img src="./assets/profile-light.svg" width="780" alt="Public and private GitHub statistics, current contribution streak, languages, and trophies" />
 </picture>
 
 <p align="center">
