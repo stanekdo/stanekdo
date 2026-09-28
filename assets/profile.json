@@ -1,66 +1,66 @@
 {
   "scope": "Public and private activity accessible to the profile owner's token",
-  "as_of": "2026-09-21",
+  "as_of": "2026-09-28",
   "created": "2016-06-28",
   "stats": {
-    "followers": 13,
-    "prs": 865,
-    "issues": 68,
-    "contributed_to": 72,
+    "followers": 14,
+    "prs": 918,
+    "issues": 73,
+    "contributed_to": 73,
     "stars": 1,
-    "repositories": 75,
-    "commits": 5149,
+    "repositories": 77,
+    "commits": 5274,
     "reviews": 0
   },
   "streak": {
-    "total": 6161,
+    "total": 6346,
     "current": {
-      "weeks": 56,
+      "weeks": 57,
       "start": "2025-08-31",
-      "end": "2026-09-21"
+      "end": "2026-09-28"
     }
   },
   "language_count": 33,
   "languages": [
     {
       "name": "Jupyter Notebook",
-      "percentage": 24.31828,
+      "percentage": 21.45593,
       "color": "#DA5B0B"
     },
     {
+      "name": "HTML",
+      "percentage": 16.34324,
+      "color": "#e34c26"
+    },
+    {
       "name": "JavaScript",
-      "percentage": 18.613169,
+      "percentage": 16.148253,
       "color": "#f1e05a"
     },
     {
       "name": "Python",
-      "percentage": 16.983928,
+      "percentage": 14.020944,
       "color": "#3572A5"
     },
     {
       "name": "TypeScript",
-      "percentage": 15.551193,
+      "percentage": 13.513697,
       "color": "#3178c6"
     },
     {
       "name": "Go",
-      "percentage": 11.158616,
+      "percentage": 9.845206,
       "color": "#00ADD8"
     },
     {
       "name": "TeX",
-      "percentage": 6.569645,
+      "percentage": 5.455955,
       "color": "#3D6117"
     },
     {
       "name": "Elixir",
-      "percentage": 3.645913,
+      "percentage": 3.216776,
       "color": "#6e4a7e"
-    },
-    {
-      "name": "C#",
-      "percentage": 3.159257,
-      "color": "#7355dd"
     }
   ]
 }
