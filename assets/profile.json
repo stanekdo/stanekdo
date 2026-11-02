@@ -1,65 +1,65 @@
 {
   "scope": "Public and private activity accessible to the profile owner's token",
-  "as_of": "2026-10-26",
+  "as_of": "2026-11-02",
   "created": "2016-06-28",
   "stats": {
-    "followers": 16,
-    "prs": 952,
-    "issues": 73,
-    "contributed_to": 79,
+    "followers": 15,
+    "prs": 988,
+    "issues": 77,
+    "contributed_to": 82,
     "stars": 1,
-    "repositories": 83,
-    "commits": 5491,
+    "repositories": 86,
+    "commits": 5753,
     "reviews": 0
   },
   "streak": {
-    "total": 6603,
+    "total": 6908,
     "current": {
-      "weeks": 61,
+      "weeks": 62,
       "start": "2025-08-31",
-      "end": "2026-10-26"
+      "end": "2026-11-02"
     }
   },
   "language_count": 33,
   "languages": [
     {
       "name": "Python",
-      "percentage": 23.475686,
+      "percentage": 22.920885,
       "color": "#3572A5"
     },
     {
       "name": "Jupyter Notebook",
-      "percentage": 15.730459,
+      "percentage": 15.281674,
       "color": "#DA5B0B"
     },
     {
       "name": "JavaScript",
-      "percentage": 13.528472,
+      "percentage": 13.442669,
       "color": "#f1e05a"
     },
     {
       "name": "HTML",
-      "percentage": 13.208771,
+      "percentage": 12.832002,
       "color": "#e34c26"
     },
     {
       "name": "TypeScript",
-      "percentage": 12.119705,
+      "percentage": 11.826888,
       "color": "#3178c6"
     },
     {
       "name": "TeX",
-      "percentage": 10.243548,
+      "percentage": 9.951303,
       "color": "#3D6117"
     },
     {
       "name": "Go",
-      "percentage": 7.218033,
+      "percentage": 7.012105,
       "color": "#00ADD8"
     },
     {
       "name": "Rust",
-      "percentage": 4.475326,
+      "percentage": 6.732474,
       "color": "#dea584"
     }
   ]
